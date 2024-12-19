@@ -39,7 +39,7 @@ func (s *Store) CreateUser(employee datatypes.Employee) (int64, error) {
 	return id, nil
 }
 
-func (s *Store) GetUsers(user *datatypes.Employee) error {
+func (s *Store) GetUser(user *datatypes.Employee) error {
 
 	row, err := s.db.Query("Select name, address from employee LIMIT 5")
 
@@ -51,4 +51,41 @@ func (s *Store) GetUsers(user *datatypes.Employee) error {
 		}
 	}
 	return err
+}
+
+func (s *Store) EditUser(id int, user datatypes.Employee) error {
+
+	result, err := s.db.Exec("Update employee set name =?, address =?  where id =?", user.Name, user.Address, id)
+
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows affected, record with id %d may not exist", id)
+	}
+
+	return nil
+}
+
+func (s *Store) DeleteUser(id int) error {
+
+	result, err := s.db.Exec("delete from employee where id =?", id)
+	if err != nil {
+		return err
+	}
+	row, err := result.RowsAffected()
+	if row == 0 {
+		return fmt.Errorf("Couldnt find the ")
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

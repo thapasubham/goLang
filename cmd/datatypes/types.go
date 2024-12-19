@@ -2,7 +2,9 @@ package datatypes
 
 type UserStore interface {
 	CreateUser(Employee) (int64, error)
-	GetUsers(*Employee) error
+	GetUser(*Employee) error
+	EditUser(int, Employee) error
+	DeleteUser(int) error
 }
 
 type Users struct {
