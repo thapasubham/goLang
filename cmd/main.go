@@ -3,19 +3,16 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
+
 	"github.com/thapasubham/go-learn/cmd/api"
+	"github.com/thapasubham/go-learn/cmd/utils"
 )
 
 func main() {
 
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env" + err.Error())
-	}
-	dbURL := os.Getenv("DB_URL")
+	dbURL := utils.LoadEnv("DB_URL")
 	db, err := sql.Open("mysql", dbURL)
 	initDatabase(db)
 	if err != nil {

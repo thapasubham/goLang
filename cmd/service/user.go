@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/thapasubham/go-learn/cmd/datatypes"
@@ -22,24 +21,24 @@ func NewHandler(store datatypes.UserStore) *Handler {
 // routes
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/user", h.handleInsert).Methods("post")
-	router.HandleFunc("/user", h.handleGet).Methods("get")
-	router.HandleFunc("/user/{id}", h.handleEdit).Methods("put")
-	router.HandleFunc("/user/{id}", h.handleDelete).Methods("delete")
+	router.HandleFunc("/login", h.logIn).Methods("post")
+
 }
 
 // create user
 func (h *Handler) handleInsert(w http.ResponseWriter, r *http.Request) {
-	var payload datatypes.Employee
+	utils.EnableCors(&w)
+	var payload datatypes.User
 
 	if err := utils.ParseJson(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 	}
 
-	fmt.Println(payload.Name + " " + payload.Address)
+	fmt.Println(payload.Username + " and " + payload.Password)
 
-	rowAffected, err := h.store.CreateUser(datatypes.Employee{
-		Name:    payload.Name,
-		Address: payload.Address,
+	rowAffected, err := h.store.CreateUser(datatypes.User{
+		Username: payload.Username,
+		Password: payload.Password,
 	})
 
 	if err != nil {
@@ -49,45 +48,28 @@ func (h *Handler) handleInsert(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJson(w, http.StatusAccepted, rowAffected)
 }
 
-// get single user
-func (h *Handler) handleGet(w http.ResponseWriter, r *http.Request) {
-	var payload datatypes.Employee
-
-	err := h.store.GetUser(&payload)
+func (h *Handler) logIn(w http.ResponseWriter, r *http.Request) {
+	utils.EnableCors(&w)
+	var payload datatypes.User
+	err := utils.ParseJson(r, &payload)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
-	}
-
-	utils.WriteJson(w, http.StatusOK, payload)
-
-}
-
-// edit
-func (h *Handler) handleEdit(w http.ResponseWriter, r *http.Request) {
-	var payload datatypes.Employee
-	if err := utils.ParseJson(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 	}
-	vars := mux.Vars(r)
-	temp_ID := vars["id"]
-	id, _ := strconv.Atoi(temp_ID)
-	err := h.store.EditUser(id, payload)
+
+	id, err := h.store.LogIn(payload)
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	secret := []byte(utils.LoadEnv("SECRET"))
+	fmt.Println(secret)
+	token, err := utils.CreateJWT(secret, id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
-	} else {
-		utils.WriteJson(w, http.StatusAccepted, "Updated")
+		return
 	}
-}
 
-// delete user
-func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["id"])
-
-	if err := h.store.DeleteUser(id); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
-	} else {
-		utils.WriteJson(w, http.StatusOK, "Sucessfully Deleted")
-	}
+	utils.WriteJson(w, http.StatusOK, map[string]string{"token": token})
 
 }

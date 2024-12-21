@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/thapasubham/go-learn/cmd/datatypes"
+	"github.com/thapasubham/go-learn/cmd/utils"
 )
 
 type Store struct {
@@ -16,76 +17,46 @@ func NewStore(db *sql.DB) *Store {
 
 }
 
-func (s *Store) CreateUser(employee datatypes.Employee) (int64, error) {
+func (s *Store) CreateUser(user datatypes.User) (int64, error) {
 
-	result, err := s.db.Exec("INSERT INTO employee (name, address) VALUES (?, ?)", employee.Name, employee.Address)
+	password, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println(employee.Name + " " + employee.Address)
 
-	id, err := result.LastInsertId()
-
-	if id == 0 {
-		fmt.Println("No rows affected. Possible constraint or query issue.")
-
+	var existingUser string
+	err = s.db.QueryRow("SELECT username FROM users WHERE username = ?", user.Username).Scan(&existingUser)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
 	}
 
-	fmt.Print(id)
+	if existingUser != "" {
+		return 0, fmt.Errorf("username already exists")
+	}
+
+	result, err := s.db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", user.Username, password)
 	if err != nil {
-		return id, err
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
 	}
 
 	return id, nil
 }
-
-func (s *Store) GetUser(user *datatypes.Employee) error {
-
-	row, err := s.db.Query("Select name, address from employee LIMIT 5")
-
-	if err == nil {
-		for row.Next() {
-			if err := row.Scan(&user.Name, &user.Address); err != nil {
-				return err
-			}
-		}
-	}
-	return err
-}
-
-func (s *Store) EditUser(id int, user datatypes.Employee) error {
-
-	result, err := s.db.Exec("Update employee set name =?, address =?  where id =?", user.Name, user.Address, id)
-
+func (s *Store) LogIn(user datatypes.User) (int, error) {
+	var storedPasswordHash string
+	var id int
+	err := s.db.QueryRow("SELECT id, password FROM users WHERE username = ?", user.Username).Scan(&id, &storedPasswordHash)
 	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-
-	if err != nil {
-		return fmt.Errorf("failed to fetch rows affected: %w", err)
+		return 0, fmt.Errorf("username not found")
 	}
 
-	if rowsAffected == 0 {
-		return fmt.Errorf("no rows affected, record with id %d may not exist", id)
+	if !utils.CheckPasswordHash(user.Password, storedPasswordHash) {
+		return 0, fmt.Errorf("incorrect password")
 	}
 
-	return nil
-}
-
-func (s *Store) DeleteUser(id int) error {
-
-	result, err := s.db.Exec("delete from employee where id =?", id)
-	if err != nil {
-		return err
-	}
-	row, err := result.RowsAffected()
-	if row == 0 {
-		return fmt.Errorf("Couldnt find the ")
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return id, nil
 }
