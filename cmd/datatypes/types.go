@@ -5,6 +5,11 @@ type UserStore interface {
 	LogIn(User) (int, error)
 }
 
+type ExpenseStore interface {
+	GetExpenses(*[]Expense, int) error
+	GetExpense(*Expense, int) error
+}
+
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

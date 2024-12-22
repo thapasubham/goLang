@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/thapasubham/go-learn/cmd/service"
+	"github.com/thapasubham/go-learn/cmd/service/expense"
+	service "github.com/thapasubham/go-learn/cmd/service/user"
 )
 
 type ApiServer struct {
@@ -25,12 +26,16 @@ func NewApiServer(addr string, db *sql.DB) *ApiServer {
 func (s *ApiServer) Run() error {
 	router := mux.NewRouter()
 
-	
 	router.HandleFunc("/", index)
 	subRouter := router.PathPrefix("/api/").Subrouter()
 
 	storeHander := service.NewStore(s.db)
 	userHander := service.NewHandler(storeHander)
+
+	expenseStore := expense.NewStore(s.db)
+	expenseHandler := *expense.NewHandler(expenseStore)
+
+	expenseHandler.RegisterRoutes(subRouter)
 	userHander.RegisterRoutes(subRouter)
 
 	fmt.Println("Listening on: ", s.addr)

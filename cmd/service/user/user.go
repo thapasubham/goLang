@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"fmt"
@@ -13,7 +13,6 @@ type Handler struct {
 	store datatypes.UserStore
 }
 
-// new handler
 func NewHandler(store datatypes.UserStore) *Handler {
 	return &Handler{store: store}
 }
