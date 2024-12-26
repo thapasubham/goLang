@@ -19,17 +19,22 @@ func NewHandler(store datatypes.ExpenseStore) *Handler {
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 
-	router.HandleFunc("/expenses/{user_id}", h.Expenses).Methods("get")
+	router.HandleFunc("/expenses/", h.Expenses).Methods("get")
 	router.HandleFunc("/expense/{id}", h.Expense).Methods("get")
 }
 
 func (h *Handler) Expenses(w http.ResponseWriter, r *http.Request) {
 
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["user_id"])
 	var expenses []datatypes.Expense
 
-	err := h.store.GetExpenses(&expenses, id)
+	user_id, err := utils.GetIDJwt(r)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusForbidden, err)
+		return
+	}
+
+	err = h.store.GetExpenses(&expenses, user_id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return

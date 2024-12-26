@@ -46,6 +46,7 @@ func (s *Store) CreateUser(user datatypes.User) (int64, error) {
 
 	return id, nil
 }
+
 func (s *Store) LogIn(user datatypes.User) (int, error) {
 	var storedPasswordHash string
 	var id int
