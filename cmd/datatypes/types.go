@@ -8,6 +8,9 @@ type UserStore interface {
 type ExpenseStore interface {
 	GetExpenses(*[]Expense, int) error
 	GetExpense(*Expense, int) error
+	AddExpense(*Expense, int) error
+	EditExpense(*Expense, int) error
+	DeleteExpense(int, int) error
 }
 
 type User struct {
