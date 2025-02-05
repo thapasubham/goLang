@@ -64,6 +64,7 @@ func (h *Handler) Expense(w http.ResponseWriter, r *http.Request) {
 
 // Add a new expense
 func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
+
 	userID, err := utils.GetIDJwt(r)
 	if err != nil {
 		utils.WriteError(w, http.StatusForbidden, err)
@@ -88,6 +89,7 @@ func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 
 // Edit an existing expense
 func (h *Handler) EditExpense(w http.ResponseWriter, r *http.Request) {
+
 	userID, err := utils.GetIDJwt(r)
 	if err != nil {
 		utils.WriteError(w, http.StatusForbidden, err)
