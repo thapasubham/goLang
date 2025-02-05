@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 // create user
 func (h *Handler) handleInsert(w http.ResponseWriter, r *http.Request) {
-	utils.EnableCors(&w)
+
 	var payload datatypes.User
 
 	if err := utils.ParseJson(r, &payload); err != nil {
@@ -48,7 +48,7 @@ func (h *Handler) handleInsert(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) logIn(w http.ResponseWriter, r *http.Request) {
-	utils.EnableCors(&w)
+
 	var payload datatypes.User
 	err := utils.ParseJson(r, &payload)
 	if err != nil {

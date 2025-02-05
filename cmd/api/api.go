@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/thapasubham/go-learn/cmd/service/expense"
 	service "github.com/thapasubham/go-learn/cmd/service/user"
+	"github.com/thapasubham/go-learn/cmd/utils"
 )
 
 type ApiServer struct {
@@ -26,7 +28,14 @@ func NewApiServer(addr string, db *sql.DB) *ApiServer {
 func (s *ApiServer) Run() error {
 	router := mux.NewRouter()
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Adjust for your frontend
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
 	router.HandleFunc("/", index)
+
 	subRouter := router.PathPrefix("/api/").Subrouter()
 
 	storeHander := service.NewStore(s.db)
@@ -39,8 +48,10 @@ func (s *ApiServer) Run() error {
 	userHander.RegisterRoutes(subRouter)
 
 	fmt.Println("Listening on: ", s.addr)
-	return http.ListenAndServe(s.addr, router)
+	handler := c.Handler(router)
+	return http.ListenAndServe(s.addr, handler)
 }
 func index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello What is up fella")
+	utils.EnableCors(w)
+	utils.WriteJson(w, 200, map[string]string{"hi": "welcome"})
 }
